@@ -1,0 +1,10 @@
+input_id,description,canonical_type,unit,source,cost_regime
+BLOCK_A,Bloco cerâmico,material,un,SINAPI,purchase
+BEDDING_MORTAR,Argamassa de assentamento,material,kg,SINAPI,purchase
+RENDER_MORTAR,Argamassa de revestimento,material,kg,SINAPI,purchase
+SEALER_A,Selador acrílico,material,L,SINAPI,purchase
+PAINT_A,Tinta acrílica,material,L,SINAPI,purchase
+BRICKLAYER,Pedreiro,labor,h,SINAPI,employment
+HELPER,Ajudante,labor,h,SINAPI,employment
+PAINTER,Pintor,labor,h,SINAPI,employment
+MIXER_RENT,Betoneira 400 L,equipment,h,SINAPI,rental
