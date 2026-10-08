@@ -354,3 +354,67 @@ In particular:
 - no database persistence is implemented.
 
 The current objective is architectural clarity and domain learning before productization.
+
+## Current Status
+
+### Spiral 1 — Canonical Budget Model and Synthetic PoC
+
+Completed.
+
+The first spiral established the canonical budget model and validated the core
+budget algebra using synthetic CSV data.
+
+Main results:
+
+- Project and budget treated as distinct concepts.
+- Services represented as flat compositions of terminal inputs.
+- Contextual prices separated from input identity.
+- Project-level costs separated from service compositions.
+- Simplified effective BDI applied after the cost of work.
+- Deterministic budget engine implemented with Pandas.
+- Synthetic PoC validated end-to-end.
+
+Spiral 1 development time: approximately 7h45.
+
+### Spiral 2 — SINAPI Integration MVP
+
+Completed.
+
+The second spiral integrated a real SINAPI snapshot into the canonical model
+without changing the core budget algebra.
+
+Reference snapshot:
+
+- Source: SINAPI / CAIXA
+- Period: 2025-09
+- Location: SC
+- Pricing regime: sem desoneração
+
+Main results:
+
+- Dynamic extraction from the SINAPI analytical workbook.
+- Recursive composition flattening with arbitrary auxiliary composition depth.
+- Preservation of source provenance through audit paths.
+- Canonical source-qualified IDs such as `SINAPI_104658`.
+- Complete service catalog extracted from the snapshot: 9,783 services.
+- Selective materialization of service compositions.
+- Canonical price extraction from the SINAPI ISD sheet.
+- Cross-source metadata validation between analytical compositions and prices.
+- Persistent canonical snapshot under `extracted-data/`.
+- CLI for building valid project requirements from materialized services.
+- Budget engine integrated with the real canonical snapshot.
+- Explicit validation for:
+  - non-materialized requested services;
+  - missing required input prices;
+  - invalid CLI selections;
+  - invalid or non-positive quantities.
+
+The benchmark composition `SINAPI_104658` produced:
+
+- Engine unit cost: BRL 148.331134
+- Official SINAPI CSD cost: BRL 148.29
+- Difference: BRL 0.041134 (~0.028%)
+
+The small difference is consistent with calculations based on published input
+prices rounded to two decimal places.
+

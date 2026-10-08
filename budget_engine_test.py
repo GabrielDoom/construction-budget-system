@@ -1,4 +1,8 @@
 import pandas as pd
+from pathlib import Path
+from source.requirements_cli import (
+    build_requirements_cli
+)
 
 # Format functions
 def format_currency(value):
@@ -11,22 +15,106 @@ def format_currency(value):
 def format_percent(value):
     return f"{value * 100: .2f}%".replace(".",",")
 
+# Recovery path
+SNAPSHOT_DIR = Path(
+    "extracted-data/SINAPI/2025-09/SC"
+)
 
 # Catalog/reference data
-inputs = pd.read_csv("data/inputs.csv")
+services = pd.read_csv(
+    SNAPSHOT_DIR / "services.csv"
+)
+
+compositions = pd.read_csv(
+    SNAPSHOT_DIR / "compositions.csv"
+)
+
+selected_prices = pd.read_csv(
+    SNAPSHOT_DIR / "selected_prices.csv"
+)
+
+selected_prices = selected_prices[
+    selected_prices["input_id"]
+    != "SINAPI_4750"
+].copy()
+
+# CLI Interruption
+
+requirements = build_requirements_cli(
+    services,
+    compositions
+)
+
+# Wrong Injection
+
+# materialized_ids = set(
+#     compositions["service_id"]
+# )
+
+# unmaterialized_service = (
+#     services[
+#         ~services["service_id"].isin(
+#             materialized_ids
+#         )
+#     ]
+#     .iloc[0]
+# )
+
+# requirements = pd.DataFrame([
+#     {
+#         "service_id":
+#             unmaterialized_service["service_id"],
+#         "quantity": 1
+#     }
+# ])
+
+# print(
+#     "TEST SERVICE:",
+#     unmaterialized_service["service_id"],
+#     unmaterialized_service["description"]
+# )
 
 # Operational database
-selected_prices = pd.read_csv("data/selected_prices.csv")
-compositions = pd.read_csv("data/compositions.csv")
-requirements = pd.read_csv("data/requirements.csv")
 project_costs = pd.read_csv("data/project_costs.csv")
 budget_config = pd.read_csv("data/budget_config.csv")
 
-composition_prices = compositions.merge(
+requested_service_ids = set(
+    requirements["service_id"]
+)
+
+budget_compositions = compositions[
+    compositions["service_id"].isin(
+        requested_service_ids
+    )
+].copy()
+
+composition_prices = budget_compositions.merge(
     selected_prices,
     on="input_id",
     how="left"
 )
+
+composition_prices = budget_compositions.merge(
+    selected_prices,
+    on="input_id",
+    how="left"
+)
+
+missing_prices = composition_prices["price"].isna()
+
+if missing_prices.any():
+    missing_inputs = (
+        composition_prices.loc[
+            missing_prices,
+            ["service_id", "input_id"]
+        ]
+        .to_dict("records")
+    )
+
+    raise ValueError(
+        "Missing prices for required inputs: {}."
+        .format(missing_inputs)
+    )
 
 composition_prices["input_cost"] = (
     composition_prices["coefficient"]
@@ -49,6 +137,19 @@ budget_items = requirements.merge(
     on="service_id",
     how="left"
 )
+
+missing_costs = budget_items["unit_cost"].isna()
+
+if missing_costs.any():
+    raise ValueError(
+        "Requirements contain services without materialized costs: {}."
+        .format(
+            budget_items.loc[
+                missing_costs,
+                "service_id"
+            ].tolist()
+        )
+    )
 
 budget_items["item_cost"] = (
     budget_items["quantity"]

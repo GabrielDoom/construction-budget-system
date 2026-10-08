@@ -1,5 +1,4 @@
 import pandas as pd
-from pathlib import Path
 
 import sinapi_compositions as composition_adapter
 import sinapi_prices as price_adapter
@@ -11,22 +10,14 @@ SOURCE_FILE = (
 )
 
 SERVICE_CODES = [
-	104658,
-	88316,
-	88309,
-	95378,
-	95371
+	104658
 ]
 
+#TARGET_SERVICE = 104658
 REFERENCE_SOURCE = "SINAPI"
 LOCATION = "SC"
 PERIOD = "2025-09"
 AUDIT = False
-
-OUTPUT_DIR = Path(
-	"extracted-data"
-) / REFERENCE_SOURCE / PERIOD / LOCATION
-
 
 def main():
 	# --------------------------------------------------------
@@ -39,21 +30,9 @@ def main():
 		)
 	)
 
-	source_service_catalog = (
-		composition_adapter.extract_service_catalog(
-			data,
-			columns
-		)
-	)
-
-	services = (
-		composition_adapter.build_service_catalog(
-			source_service_catalog,
-			REFERENCE_SOURCE
-		)
-	)
-
 	composition_audits = {}
+
+	service_frames = []
 	composition_frames = []
 	terminal_metadata_frames = []
 
@@ -100,6 +79,13 @@ def main():
 			)
 		)
 
+		service_frames.append(
+			composition_adapter.build_services(
+				source_service,
+				REFERENCE_SOURCE
+			)
+		)
+
 		composition_frames.append(
 			composition_adapter.build_compositions(
 				aggregated,
@@ -123,6 +109,11 @@ def main():
 			"flattened": flattened,
 			"aggregated": aggregated
 		}
+
+	services = pd.concat(
+		service_frames,
+		ignore_index=True
+	)
 
 
 	compositions = pd.concat(
@@ -299,76 +290,32 @@ def main():
 	# CANONICAL OUTPUT
 	# --------------------------------------------------------
 
-	# print()
-	# print("SERVICE CATALOG")
-	# print("Services:", len(services))
-
-	# print()
-	# print("CANONICAL COMPOSITION")
-	# print(
-	# 	compositions.to_string(
-	# 		index=False,
-	# 		float_format=lambda value:
-	# 			"{:.7f}".format(value)
-	# 	)
-	# )
-
-	# print()
-	# print("SELECTED PRICES")
-	# print(
-	# 	selected_prices.to_string(
-	# 		index=False,
-	# 		float_format=lambda value:
-	# 			"{:.2f}".format(value)
-	# 	)
-	# )
+	print()
+	print("SERVICES")
+	print(
+		services.to_string(
+			index=False
+		)
+	)
 
 	print()
-	print("SINAPI SNAPSHOT UPDATED")
-	print("Path:", OUTPUT_DIR)
-	print("Services:", len(services))
-	print("Materialized services:", len(normalized_service_codes))
-	print("Composition rows:", len(compositions))
-	print("Selected prices:", len(selected_prices))
-
-	# --------------------------------------------------------
-	# WRITE CANONICAL REPOSITORY
-	# --------------------------------------------------------
-
-
-	OUTPUT_DIR.mkdir(
-		parents=True,
-		exist_ok=True
+	print("CANONICAL COMPOSITION")
+	print(
+		compositions.to_string(
+			index=False,
+			float_format=lambda value:
+				"{:.7f}".format(value)
+		)
 	)
 
-	services_path = (
-		OUTPUT_DIR
-		/ "services.csv"
-	)
-
-	compositions_path = (
-		OUTPUT_DIR
-		/ "compositions.csv"
-	)
-
-	selected_prices_path = (
-		OUTPUT_DIR
-		/ "selected_prices.csv"
-	)
-
-	services.to_csv(
-		services_path,
-		index=False
-	)
-
-	compositions.to_csv(
-		compositions_path,
-		index=False
-	)
-
-	selected_prices.to_csv(
-		selected_prices_path,
-		index=False
+	print()
+	print("SELECTED PRICES")
+	print(
+		selected_prices.to_string(
+			index=False,
+			float_format=lambda value:
+				"{:.2f}".format(value)
+		)
 	)
 
 if __name__ == "__main__":
